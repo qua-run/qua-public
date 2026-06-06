@@ -20,7 +20,7 @@ curl -i https://example.com/protected
 # {"x402Version":1,"accepts":[{"scheme":"exact","network":"base-sepolia",...}]}
 ```
 
-Save the `accepts[0]` block as `req.json`.
+Save the `accepts[0]` block as `req.json` ([`req.json.example`](req.json.example) shows the shape, including the optional `fee` block — copy it to `req.json` for a dry run of the signing step).
 
 ## Step 2 — Sign the EIP-3009 leg(s)
 
