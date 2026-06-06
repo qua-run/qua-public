@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  go-example:
+    name: go example builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: gofmt
+        working-directory: examples/go
+        run: test -z "$(gofmt -l .)"
+      - name: vet + build
+        working-directory: examples/go
+        run: |
+          go vet ./...
+          go build ./...
+
+  python-examples:
+    name: python examples import
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install example deps
+        run: pip install fastapi eth-account
+      - name: import server example
+        working-directory: examples/python
+        run: python -c "import main"
+      - name: import signing script
+        working-directory: examples/curl
+        run: python -c "import sign"
