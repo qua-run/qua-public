@@ -1,5 +1,9 @@
 # Qua — per-call payments for agents
 
+[![ci](https://github.com/qua-run/qua-public/actions/workflows/ci.yml/badge.svg)](https://github.com/qua-run/qua-public/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![x402](https://img.shields.io/badge/protocol-x402-8A2BE2)](docs/x402.md)
+
 Qua lets you charge a small USDC fee per HTTP request, settled on Base. It's
 useful when you sell access to an API by the call (LLM proxies, search APIs,
 scrapers, MCP tools) and don't want to mess with Stripe, accounts, or
@@ -30,8 +34,10 @@ client examples. The facilitator itself is a hosted service at
 
 - [`docs/x402.md`](docs/x402.md) — the wire format, plain English. Read this
   if you want to know what an `X-PAYMENT` header actually contains.
-- [`examples/`](examples/) — minimal client snippets in Go, Python, and curl.
-  Copy-pastable; they hit the public staging facilitator.
+- [`examples/`](examples/) — **runnable, self-contained** integrations in Go,
+  Python, and curl. No unpublished dependencies: each one implements the wire
+  contract directly, so they double as reference implementations. CI builds
+  them on every push.
 
 ## What's NOT here
 
@@ -48,13 +54,11 @@ client examples. The facilitator itself is a hosted service at
 2. Pin a payout address. This is the wallet that receives settled USDC; the
    facilitator will refuse to settle to any other address. Set it via
    `POST /v1/routes`, see `docs/x402.md` §"Routes".
-3. Wrap an HTTP handler with the SDK (Go example below) and serve it.
+3. Wrap an HTTP handler and serve it. The integration shape:
 
 ```go
-import "github.com/qua-run/qua-go"   // <-- once published
-
-pay := qua.New(qua.Config{
-    APIKey:      os.Getenv("QUA_API_KEY"),       // ap_live_…
+pay := New(Config{
+    APIKey:      os.Getenv("QUA_API_KEY"),        // ap_live_…
     PayTo:       os.Getenv("QUA_PAYOUT_ADDRESS"), // 0x…
     Facilitator: "https://facilitator.qua.run",
 })
@@ -62,9 +66,16 @@ http.Handle("/search", pay.Require("1000", searchHandler)) // 1000 base units = 
 http.ListenAndServe(":8080", nil)
 ```
 
-The full SDK source ships in a separate Go module once that decision is
-made. Until then, the protocol doc above + the curl example in
-[`examples/curl/`](examples/curl/) is enough to integrate by hand.
+That `New` / `Require` middleware is ~200 lines of stdlib Go — the complete,
+runnable version lives in [`examples/go/main.go`](examples/go/main.go)
+(`go run .` and you're serving paid endpoints). Python equivalent in
+[`examples/python/`](examples/python/), or do the whole dance by hand with
+[`examples/curl/`](examples/curl/).
+
+Standalone SDK packages (Go module / PyPI / npm) are on the
+[roadmap](https://github.com/qua-run/qua-public/issues) — until they ship,
+vendoring the example middleware is the supported path, and the protocol doc
+is the contract it implements.
 
 ## Security
 
